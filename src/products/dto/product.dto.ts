@@ -1,5 +1,15 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsEmail } from 'class-validator';
+
 export class CreateProductDto {
-     name:string;
-   number:number
-   email: string
+  @ApiProperty({ example: 'name' })
+  @IsString()
+  name: string;
+
+  @ApiProperty()
+  phone: number;
+
+  @ApiProperty({ example: 'name@gmail.com' })
+  @IsEmail()
+  email: string;
 }

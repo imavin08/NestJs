@@ -1,54 +1,62 @@
-import { Body, Controller,Delete,Get, Param, Post, Put, Headers} from '@nestjs/common';
-import * as jsonwebtoken from "jsonwebtoken"
-import { UnauthorizedException } from "@nestjs/common";
-
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ProductService } from './products-service';
-import { Product } from "./schemas/product.schema";
-import { CreateProductRequest } from './dto/requests/create-product.request';
+import { Product } from './schemas/product.schema';
+import {
+  ProductRequest,
+  UpdateProductRequest,
+} from '../products/dto/requests/';
 import { ProductResponse } from './dto/responses/product.response';
-import { UpdateProductRequest } from './dto/requests/update-product.request';
+import { RolesGuard } from 'src/common/guards/roles-guars';
+import { Roles } from 'src/common/decorators/roles-decorator';
+import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 
-
+@ApiBearerAuth()
 @Controller('products')
+@ApiTags('products')
 export class ProductsController {
+  constructor(private readonly productsService: ProductService) {}
 
-    constructor(private readonly productsService:ProductService) {
+  @Get()
+  @UseGuards(RolesGuard)
+  @Roles()
+  @ApiResponse({ type: [ProductResponse] })
+  getAll(): Promise<ProductResponse[]> {
+    return this.productsService.getAll();
+  }
 
-    }
+  @Get(':id')
+  @ApiResponse({ type: ProductResponse })
+  getOne(@Param('id') id: string): Promise<ProductResponse> {
+    return this.productsService.getById(id);
+  }
 
-    @Get()
-    getAll(@Headers() query):Promise<ProductResponse[]> {
-        if (!query.authorization) {
-            throw new UnauthorizedException('Not authorized')
-        }
-        const [type,token]=query.authorization.split(' ')
-       if (type !== "Bearer" && !token) {
-        throw new UnauthorizedException('Not authorized')
-       }
-       const user = jsonwebtoken.decode(token, process.env.JWT_SECRET)
-       console.log(user);
-       
-       
-        return this.productsService.getAll(user)
-    }
+  @Post()
+  @ApiResponse({ type: ProductResponse })
+  create(@Body() createProduct: ProductRequest): Promise<Product> {
+    return this.productsService.create(createProduct);
+  }
 
-    @Get(':id')
-    getOne(@Param('id') id:string):Promise<ProductResponse> {
-        return this.productsService.getById(id)
-    }
+  @Delete(':id')
+  @ApiResponse({ type: ProductResponse })
+  remove(@Param('id') id: string): Promise<Product> {
+    return this.productsService.remove(id);
+  }
 
-    @Post()
-    create(@Body() createProduct:CreateProductRequest):Promise<Product> {
-        return this.productsService.create(createProduct)
-    }
-
-    @Delete(':id')
-    remove(@Param('id') id:string):Promise<Product> {
-        return this.productsService.remove(id)
-    }
-
-    @Put(':id')
-    update(@Body() updateProduct:UpdateProductRequest,@Param('id') id:string):Promise<Product> {
-        return this.productsService.update(id,updateProduct)
-    }
+  @Patch(':id')
+  @ApiResponse({ type: ProductResponse })
+  update(
+    @Body() updateProduct: UpdateProductRequest,
+    @Param('id') id: string,
+  ): Promise<Product> {
+    return this.productsService.update(id, updateProduct);
+  }
 }
