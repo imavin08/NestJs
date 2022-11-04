@@ -11,16 +11,18 @@ import { UserService } from 'src/user/user.service';
 export class RolesGuard implements CanActivate {
   constructor(private readonly userService: UserService) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const { headers } = context.switchToHttp().getRequest();
-    if (!headers.authorization) {
+    const data = context.switchToHttp().getRequest();
+
+    if (!data.headers.authorization) {
       throw new UnauthorizedException('Unauthorized');
     }
 
-    const [type, token] = headers.authorization.split(' ');
+    const [type, token] = data.headers.authorization.split(' ');
     if (type !== 'Bearer' && !token) {
       throw new UnauthorizedException('Unauthorized');
     }
     const user = jsonwebtoken.decode(token, process.env.JWT_SECRET);
+
     if (!user) {
       throw new UnauthorizedException('Unauthorized');
     }
@@ -28,6 +30,7 @@ export class RolesGuard implements CanActivate {
     if (!currentUser) {
       throw new UnauthorizedException('Unauthorized');
     }
+
     return true;
   }
 }

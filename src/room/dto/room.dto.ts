@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 
-export class UserDto {
+export class RoomDto {
   @Expose()
   @ApiProperty()
-  email?: string;
+  id: string;
 }

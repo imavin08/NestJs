@@ -36,6 +36,7 @@ export class AuthService {
         email: user.email,
       },
       process.env.JWT_SECRET,
+      { expiresIn: '24h' },
     );
     return this.authRep.update(user.id, token);
   }

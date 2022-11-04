@@ -9,54 +9,68 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ProductService } from './products-service';
-import { Product } from './schemas/product.schema';
 import {
   ProductRequest,
   UpdateProductRequest,
 } from '../products/dto/requests/';
 import { ProductResponse } from './dto/responses/product.response';
 import { RolesGuard } from 'src/common/guards/roles-guars';
-import { Roles } from 'src/common/decorators/roles-decorator';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { HttpUser } from 'src/common/decorators/http-user.decorator';
+import { User } from 'src/auth/schemas/user.schema';
 
 @ApiBearerAuth()
 @Controller('products')
 @ApiTags('products')
+@UseGuards(RolesGuard)
 export class ProductsController {
   constructor(private readonly productsService: ProductService) {}
 
   @Get()
-  @UseGuards(RolesGuard)
-  @Roles()
   @ApiResponse({ type: [ProductResponse] })
-  getAll(): Promise<ProductResponse[]> {
-    return this.productsService.getAll();
+  async getAll(): Promise<ProductResponse[]> {
+    const data = await this.productsService.getAll();
+
+    return ProductResponse.mapFromMulti(data);
   }
 
   @Get(':id')
   @ApiResponse({ type: ProductResponse })
-  getOne(@Param('id') id: string): Promise<ProductResponse> {
-    return this.productsService.getById(id);
+  async getOne(@Param('id') id: string): Promise<ProductResponse> {
+    const data = await this.productsService.getById(id);
+
+    return ProductResponse.mapFrom(data);
   }
 
   @Post()
   @ApiResponse({ type: ProductResponse })
-  create(@Body() createProduct: ProductRequest): Promise<Product> {
-    return this.productsService.create(createProduct);
+  async create(
+    @Body() createProduct: ProductRequest,
+    @HttpUser() user: User,
+  ): Promise<ProductResponse> {
+    return this.productsService
+      .create(createProduct, user.id)
+      .then(ProductResponse.mapFrom);
   }
 
   @Delete(':id')
   @ApiResponse({ type: ProductResponse })
-  remove(@Param('id') id: string): Promise<Product> {
-    return this.productsService.remove(id);
+  async remove(
+    @Param('id') id: string,
+    @HttpUser() user: User,
+  ): Promise<ProductResponse> {
+    return this.productsService
+      .remove(id, user.id)
+      .then(ProductResponse.mapFrom);
   }
 
   @Patch(':id')
   @ApiResponse({ type: ProductResponse })
-  update(
+  async update(
     @Body() updateProduct: UpdateProductRequest,
     @Param('id') id: string,
-  ): Promise<Product> {
-    return this.productsService.update(id, updateProduct);
+  ): Promise<ProductResponse> {
+    const data = await this.productsService.update(id, updateProduct);
+    return ProductResponse.mapFrom(data);
   }
 }

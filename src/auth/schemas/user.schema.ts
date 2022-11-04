@@ -14,8 +14,14 @@ export class User extends Document {
   @Prop()
   token: null | string;
 
+  @Prop()
+  status: boolean = false;
+
   @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Products' }] })
-  products: Product['_id'];
+  products: [Product['_id']];
+
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Users' }] })
+  friends: [User['id']];
 }
 
 export const UsersSchema = SchemaFactory.createForClass(User);
